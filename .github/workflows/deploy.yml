@@ -41,8 +41,15 @@ jobs:
       - name: Deploy with SAM
         env:
           IMAGE_URI: ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
+          OPENAI_SECRET_NAME: ${{ secrets.OPENAI_SECRET_NAME }}
         run: |
           pip install --upgrade aws-sam-cli
-          sam deploy --template-file template.yaml --stack-name langchain-lambda \
-            --parameter-overrides ImageUri=$IMAGE_URI OpenAISecretName="" \
-            --capabilities CAPABILITY_IAM
+          if [ -n "$OPENAI_SECRET_NAME" ]; then
+            sam deploy --template-file template.yaml --stack-name langchain-lambda \
+              --parameter-overrides ImageUri=$IMAGE_URI OpenAISecretName=$OPENAI_SECRET_NAME \
+              --capabilities CAPABILITY_IAM
+          else
+            sam deploy --template-file template.yaml --stack-name langchain-lambda \
+              --parameter-overrides ImageUri=$IMAGE_URI \
+              --capabilities CAPABILITY_IAM
+          fi
