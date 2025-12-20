@@ -18,13 +18,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to ECR
-        id: ecr
-        uses: aws-actions/amazon-ecr-login@v1
+      - name: Login to ECR (secure)
+        env:
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+        run: |
+          REGISTRY=$(echo "$ECR_REPOSITORY" | cut -d'/' -f1)
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $REGISTRY
 
       - name: Build, tag and push image to ECR
         env:
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           echo "Building image"
