@@ -47,7 +47,8 @@ jobs:
           if [ -n "$OPENAI_SECRET_NAME" ]; then
             sam deploy --template-file template.yaml --stack-name langchain-lambda \
               --parameter-overrides ImageUri=$IMAGE_URI OpenAISecretName=$OPENAI_SECRET_NAME \
-              --capabilities CAPABILITY_IAM
+              --image-repository ${{ secrets.ECR_REPOSITORY }} \
+              --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
           else
             sam deploy --template-file template.yaml --stack-name langchain-lambda \
               --parameter-overrides ImageUri=$IMAGE_URI \
