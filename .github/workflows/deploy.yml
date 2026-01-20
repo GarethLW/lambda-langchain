@@ -38,29 +38,34 @@ jobs:
           docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REPOSITORY:latest
           docker push $ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Delete failed stack if needed
+      - name: Cleanup failed stack if needed
         env:
           STACK_NAME: langchain-lambda
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          if aws cloudformation describe-stacks --stack-name $STACK_NAME --region ${{ secrets.AWS_REGION }} 2>/dev/null | grep -q "ROLLBACK_FAILED"; then
-            echo "Stack in ROLLBACK_FAILED state. Deleting..."
-            aws cloudformation delete-stack --stack-name $STACK_NAME --region ${{ secrets.AWS_REGION }}
-            aws cloudformation wait stack-delete-complete --stack-name $STACK_NAME --region ${{ secrets.AWS_REGION }} 2>/dev/null || true
+          set +e  # Don't exit on command failure
+          STACK_STATUS=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --region $AWS_REGION 2>&1)
+          if echo "$STACK_STATUS" | grep -qE "ROLLBACK_FAILED|DELETE_FAILED|CREATE_FAILED"; then
+            echo "Stack in failed state. Attempting to delete..."
+            aws cloudformation delete-stack --stack-name $STACK_NAME --region $AWS_REGION
+            sleep 30
           fi
+          set -e
 
       - name: Deploy with SAM
         env:
           IMAGE_URI: ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
           OPENAI_SECRET_NAME: ${{ secrets.OPENAI_SECRET_NAME }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           pip install --upgrade aws-sam-cli
           if [ -n "$OPENAI_SECRET_NAME" ]; then
             sam deploy --template-file template.yaml --stack-name langchain-lambda \
               --parameter-overrides ImageUri=$IMAGE_URI OpenAISecretName=$OPENAI_SECRET_NAME \
               --image-repository ${{ secrets.ECR_REPOSITORY }} \
-              --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset --region ${{ secrets.AWS_REGION }}
+              --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset --region $AWS_REGION
           else
             sam deploy --template-file template.yaml --stack-name langchain-lambda \
               --parameter-overrides ImageUri=$IMAGE_URI \
-              --capabilities CAPABILITY_IAM --region ${{ secrets.AWS_REGION }}
+              --capabilities CAPABILITY_IAM --region $AWS_REGION
           fi
