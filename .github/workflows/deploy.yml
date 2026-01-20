@@ -38,6 +38,16 @@ jobs:
           docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REPOSITORY:latest
           docker push $ECR_REPOSITORY:$IMAGE_TAG
 
+      - name: Delete failed stack if needed
+        env:
+          STACK_NAME: langchain-lambda
+        run: |
+          if aws cloudformation describe-stacks --stack-name $STACK_NAME --region ${{ secrets.AWS_REGION }} 2>/dev/null | grep -q "ROLLBACK_FAILED"; then
+            echo "Stack in ROLLBACK_FAILED state. Deleting..."
+            aws cloudformation delete-stack --stack-name $STACK_NAME --region ${{ secrets.AWS_REGION }}
+            aws cloudformation wait stack-delete-complete --stack-name $STACK_NAME --region ${{ secrets.AWS_REGION }} 2>/dev/null || true
+          fi
+
       - name: Deploy with SAM
         env:
           IMAGE_URI: ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
@@ -48,9 +58,9 @@ jobs:
             sam deploy --template-file template.yaml --stack-name langchain-lambda \
               --parameter-overrides ImageUri=$IMAGE_URI OpenAISecretName=$OPENAI_SECRET_NAME \
               --image-repository ${{ secrets.ECR_REPOSITORY }} \
-              --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
+              --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset --region ${{ secrets.AWS_REGION }}
           else
             sam deploy --template-file template.yaml --stack-name langchain-lambda \
               --parameter-overrides ImageUri=$IMAGE_URI \
-              --capabilities CAPABILITY_IAM
+              --capabilities CAPABILITY_IAM --region ${{ secrets.AWS_REGION }}
           fi
