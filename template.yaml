@@ -33,9 +33,14 @@ Resources:
               Resource: '*'
             - Effect: Allow
               Action:
-                - ecr:GetDownloadUrlForLayer
-                - ecr:BatchGetImage
+                - ecr:*
               Resource: '*'
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: 'arn:aws:logs:*:*:*'
       Events:
         LangApi:
           Type: Api
