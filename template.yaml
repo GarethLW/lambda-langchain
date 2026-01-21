@@ -33,7 +33,9 @@ Resources:
               Resource: '*'
             - Effect: Allow
               Action:
-                - ecr:*
+                - ecr:GetAuthorizationToken
+                - ecr:BatchGetImage
+                - ecr:GetDownloadUrlForLayer
               Resource: '*'
             - Effect: Allow
               Action:
