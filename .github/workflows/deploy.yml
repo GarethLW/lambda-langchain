@@ -38,29 +38,6 @@ jobs:
           docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REPOSITORY:latest
           docker push $ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Clean up old stack if it exists
-        env:
-          STACK_NAME: langchain-lambda
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-        run: |
-          STACK_STATUS=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --region $AWS_REGION 2>&1)
-          if echo "$STACK_STATUS" | grep -q "StackStatus"; then
-            # Stack exists, delete it
-            echo "Deleting existing stack..."
-            aws cloudformation delete-stack --stack-name $STACK_NAME --region $AWS_REGION
-            # Wait for deletion to complete
-            echo "Waiting for stack deletion..."
-            for i in {1..120}; do
-              if ! aws cloudformation describe-stacks --stack-name $STACK_NAME --region $AWS_REGION 2>&1 | grep -q "does not exist"; then
-                echo "Stack still exists, waiting... (attempt $i/120)"
-                sleep 5
-              else
-                echo "Stack successfully deleted"
-                break
-              fi
-            done
-          fi
-
       - name: Deploy with SAM
         env:
           IMAGE_URI: ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
