@@ -38,48 +38,6 @@ jobs:
           docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REPOSITORY:latest
           docker push $ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Cleanup failed stack if needed
-        env:
-          STACK_NAME: langchain-lambda
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-        run: |
-          python3 << 'EOF'
-          import boto3
-          import time
-          import sys
-          
-          cf = boto3.client('cloudformation', region_name='${{ secrets.AWS_REGION }}')
-          stack_name = 'langchain-lambda'
-          
-          try:
-              response = cf.describe_stacks(StackName=stack_name)
-              stack = response['Stacks'][0]
-              status = stack['StackStatus']
-              print(f"Stack status: {status}")
-              
-              if 'FAILED' in status or 'ROLLBACK' in status:
-                  print(f"Stack in {status} state. Force deleting resources...")
-                  # First, try to get the stack resources and delete any problematic ones
-                  try:
-                      resources = cf.list_stack_resources(StackName=stack_name)
-                      print(f"Stack resources: {len(resources.get('StackResourceSummaries', []))}")
-                  except:
-                      pass
-                  
-                  # Try to delete the stack anyway
-                  try:
-                      cf.delete_stack(StackName=stack_name)
-                      print("Delete command sent. Waiting...")
-                      time.sleep(10)
-                  except Exception as e:
-                      print(f"Delete failed (may be stuck): {e}")
-          except cf.exceptions.ClientError as e:
-              if 'does not exist' in str(e):
-                  print("Stack does not exist, proceeding with fresh deployment")
-              else:
-                  print(f"Error checking stack: {e}")
-          EOF
-
       - name: Deploy with SAM
         env:
           IMAGE_URI: ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
