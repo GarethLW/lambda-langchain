@@ -36,6 +36,7 @@ Resources:
                 Action:
                   - ecr:GetAuthorizationToken
                   - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
                   - ecr:GetDownloadUrlForLayer
                 Resource: '*'
         - PolicyName: SecretsManagerAccess
