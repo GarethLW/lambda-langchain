@@ -54,6 +54,8 @@ Resources:
       PackageType: Image
       ImageUri: !Ref ImageUri
       Role: !GetAtt LangChainExecutionRole.Arn
+      MemorySize: 512
+      Timeout: 30
       Environment:
         Variables:
           OPENAI_MODEL: !Ref OpenAIModel
