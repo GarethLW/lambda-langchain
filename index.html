@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangChain OpenAI Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 700px;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+        }
+
+        .output-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .output-section h2 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .response-box {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            min-height: 60px;
+            color: #333;
+            line-height: 1.6;
+            font-size: 14px;
+            display: none;
+        }
+
+        .response-box.show {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-size: 14px;
+            display: none;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            border-left-color: #c33 !important;
+        }
+
+        .success {
+            background: #efe;
+            color: #3c3;
+            border-left-color: #3c3 !important;
+        }
+
+        .metadata {
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 LangChain OpenAI</h1>
+            <p>Ask anything, powered by GPT-3.5</p>
+        </div>
+
+        <form id="chatForm">
+            <div class="form-group">
+                <label for="prompt">Your Question</label>
+                <textarea 
+                    id="prompt" 
+                    placeholder="What would you like to know?" 
+                    required
+                ></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Advanced Options</label>
+                <div class="input-group">
+                    <div>
+                        <label for="maxTokens" style="display: none;"></label>
+                        <input 
+                            type="number" 
+                            id="maxTokens" 
+                            placeholder="Max tokens (1-1024)" 
+                            value="150" 
+                            min="1" 
+                            max="1024"
+                        >
+                    </div>
+                    <div>
+                        <label for="responseTime" style="display: none;"></label>
+                        <input 
+                            type="text" 
+                            id="responseTime" 
+                            placeholder="Response time" 
+                            disabled 
+                            style="background: #f5f5f5; cursor: not-allowed;"
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    Send
+                </button>
+                <button type="button" class="btn-clear" id="clearBtn">
+                    Clear
+                </button>
+            </div>
+        </form>
+
+        <div class="output-section">
+            <h2>Response</h2>
+            <div class="loading" id="loading">
+                <span class="loading-spinner"></span>
+                <span>Thinking...</span>
+            </div>
+            <div class="response-box" id="responseBox">
+                <div id="responseText"></div>
+                <div class="metadata" id="metadata"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('chatForm');
+        const promptInput = document.getElementById('prompt');
+        const maxTokensInput = document.getElementById('maxTokens');
+        const responseTimeInput = document.getElementById('responseTime');
+        const responseBox = document.getElementById('responseBox');
+        const responseText = document.getElementById('responseText');
+        const metadata = document.getElementById('metadata');
+        const loading = document.getElementById('loading');
+        const submitBtn = document.getElementById('submitBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        // Get API URL from current page or hardcode
+        const API_URL = 'https://odlpp1br7j.execute-api.ca-west-1.amazonaws.com/Prod/langchain';
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const prompt = promptInput.value.trim();
+            if (!prompt) return;
+
+            // UI state
+            submitBtn.disabled = true;
+            loading.classList.add('show');
+            responseBox.classList.remove('show');
+            responseBox.classList.remove('success', 'error');
+
+            const startTime = performance.now();
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        max_tokens: parseInt(maxTokensInput.value) || 150
+                    })
+                });
+
+                const endTime = performance.now();
+                const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Success
+                responseText.textContent = data.result || 'No response from API';
+                responseTimeInput.value = `${duration}s`;
+                metadata.innerHTML = `<strong>Response time:</strong> ${duration}s | <strong>Max tokens:</strong> ${maxTokensInput.value}`;
+                
+                responseBox.classList.add('show', 'success');
+            } catch (error) {
+                responseText.textContent = `Error: ${error.message}`;
+                metadata.innerHTML = `<strong>Status:</strong> Failed`;
+                responseBox.classList.add('show', 'error');
+            } finally {
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            promptInput.value = '';
+            maxTokensInput.value = '150';
+            responseTimeInput.value = '';
+            responseBox.classList.remove('show');
+            promptInput.focus();
+        });
+
+        // Focus prompt on load
+        promptInput.focus();
+    </script>
+</body>
+</html>

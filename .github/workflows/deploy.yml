@@ -55,3 +55,37 @@ jobs:
               --parameter-overrides ImageUri=$IMAGE_URI \
               --capabilities CAPABILITY_IAM --region $AWS_REGION
           fi
+
+      - name: Get S3 bucket name from CloudFormation stack
+        id: s3-output
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name langchain-lambda \
+            --query 'Stacks[0].Outputs[?OutputKey==`WebsiteBucketName`].OutputValue' \
+            --output text --region $AWS_REGION)
+          echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
+          echo "Bucket: $BUCKET_NAME"
+
+      - name: Upload website to S3
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          BUCKET_NAME=${{ steps.s3-output.outputs.bucket_name }}
+          if [ -z "$BUCKET_NAME" ]; then
+            echo "Warning: Could not retrieve S3 bucket name"
+            exit 0
+          fi
+          echo "Uploading index.html to s3://$BUCKET_NAME/"
+          aws s3 cp index.html s3://$BUCKET_NAME/index.html \
+            --content-type "text/html" \
+            --region $AWS_REGION
+
+      - name: Output deployment URLs
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          echo "=== Deployment Complete ==="
+          OUTPUTS=$(aws cloudformation describe-stacks --stack-name langchain-lambda \
+            --query 'Stacks[0].Outputs' --region $AWS_REGION --output json)
+          echo "$OUTPUTS" | jq -r '.[] | "\(.OutputKey): \(.OutputValue)"'
