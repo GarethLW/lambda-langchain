@@ -74,40 +74,7 @@ Resources:
             Path: /langchain
             Method: post
 
-  # S3 bucket for static website hosting
-  WebsiteBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      WebsiteConfiguration:
-        IndexDocument: index.html
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: false
-        BlockPublicPolicy: false
-        IgnorePublicAcls: false
-        RestrictPublicBuckets: false
-
-  # Bucket policy to allow public read access
-  BucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref WebsiteBucket
-      PolicyText:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal: "*"
-            Action: s3:GetObject
-            Resource: !Sub "${WebsiteBucket.Arn}/*"
-
 Outputs:
   ApiUrl:
     Description: "Invoke URL for the API"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/langchain"
-  
-  WebsiteBucketName:
-    Description: "S3 bucket name for uploading website files"
-    Value: !Ref WebsiteBucket
-  
-  WebsiteUrl:
-    Description: "S3 website hosting URL"
-    Value: !Sub "http://${WebsiteBucket}.s3-website.${AWS::Region}.amazonaws.com"
