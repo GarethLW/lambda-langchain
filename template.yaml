@@ -104,10 +104,10 @@ Outputs:
     Description: "Invoke URL for the API"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/langchain"
   
-  WebsiteUrl:
-    Description: "S3 website hosting URL"
-    Value: !GetAtt WebsiteBucket.WebsiteURL
-  
   WebsiteBucketName:
     Description: "S3 bucket name for uploading website files"
     Value: !Ref WebsiteBucket
+  
+  WebsiteUrl:
+    Description: "S3 website hosting URL"
+    Value: !Sub "http://${WebsiteBucket}.s3-website.${AWS::Region}.amazonaws.com"
