@@ -73,13 +73,11 @@ Resources:
           Properties:
             Path: /langchain
             Method: post
-            RestApiId: !Ref ServerlessRestApi
 
   # S3 bucket for static website hosting
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "langchain-ui-${AWS::AccountId}"
       WebsiteConfiguration:
         IndexDocument: index.html
       PublicAccessBlockConfiguration:
