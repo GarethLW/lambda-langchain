@@ -19,6 +19,9 @@ def lambda_handler(event, context):
     Uses `OPENAI_API_KEY` from environment.
     """
     try:
+        # Debug logging
+        print(f"Event: {json.dumps(event)}")
+        
         body = event.get("body") if isinstance(event, dict) else None
         if isinstance(body, str):
             data = json.loads(body) if body else {}
