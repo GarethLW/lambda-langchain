@@ -7,7 +7,12 @@ import chain
 def _response(status: int, body: dict):
     return {
         "statusCode": status,
-        "headers": {"Content-Type": "application/json"},
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type"
+        },
         "body": json.dumps(body),
     }
 
@@ -18,6 +23,19 @@ def lambda_handler(event, context):
     Expects JSON body: {"prompt": "...", "max_tokens": 150}
     Uses `OPENAI_API_KEY` from environment.
     """
+    # Handle CORS preflight OPTIONS requests
+    http_method = event.get("requestContext", {}).get("http", {}).get("method") or event.get("httpMethod")
+    if http_method == "OPTIONS":
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type"
+            },
+            "body": ""
+        }
+    
     try:
         # Debug logging
         print(f"Event: {json.dumps(event)}")

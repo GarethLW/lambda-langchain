@@ -73,6 +73,13 @@ Resources:
           Properties:
             Path: /langchain
             Method: post
+            RestApiId: !Ref ServerlessRestApi
+        OptionsApi:
+          Type: Api
+          Properties:
+            Path: /langchain
+            Method: options
+            RestApiId: !Ref ServerlessRestApi
 
 Outputs:
   ApiUrl:
