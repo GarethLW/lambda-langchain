@@ -2,6 +2,59 @@
 
 A small hobby example showing how to run a simple LangChain prompt using OpenAI from an AWS Lambda container image exposed via API Gateway.
 
+## Architecture
+
+```mermaid
+graph TB
+    User["👤 User Browser<br/>http://langchain-ui-garethlw<br/>.s3-website.ca-west-1<br/>.amazonaws.com"]
+    
+    S3["🪣 S3 Static Website<br/>index.html<br/>(public read)"]
+    
+    APIGW["🔌 API Gateway<br/>REST API<br/>CORS Enabled<br/>https://4el2g4v5gi<br/>.execute-api<br/>.ca-west-1<br/>.amazonaws.com"]
+    
+    Lambda["⚡ Lambda Function<br/>Python 3.11<br/>512 MB Memory<br/>30s Timeout<br/>Container Image"]
+    
+    ECR["🐳 ECR Registry<br/>langchain-lambda<br/>Python 3.11 Base<br/>LangChain + OpenAI"]
+    
+    Secrets["🔐 Secrets Manager<br/>my-openai-key<br/>(encrypted)"]
+    
+    OpenAI["🤖 OpenAI API<br/>GPT-3.5-turbo<br/>Chat Completions"]
+    
+    Logs["📊 CloudWatch Logs<br/>Lambda execution<br/>logs & errors"]
+    
+    GitHub["🐙 GitHub<br/>GarethLW/<br/>lambda-langchain<br/>master branch"]
+    
+    GHA["⚙️ GitHub Actions<br/>CI/CD Pipeline<br/>OIDC Auth"]
+    
+    User -->|"1. Load HTML<br/>2. Submit prompt"| S3
+    S3 -->|"3. Fetch request<br/>(CORS)"| APIGW
+    APIGW -->|"4. Invoke<br/>(proxy integration)"| Lambda
+    Lambda -->|"5. Pull API key"| Secrets
+    Lambda -->|"6. Call LLM"| OpenAI
+    OpenAI -->|"7. Return completion"| Lambda
+    Lambda -->|"8. Return response<br/>(JSON)"| APIGW
+    APIGW -->|"9. Response<br/>with CORS headers"| User
+    Lambda -->|"10. Stream logs"| Logs
+    
+    Lambda -.->|"Uses container from"| ECR
+    ECR -.->|"Built & pushed by"| GHA
+    GHA -.->|"Triggered by push to"| GitHub
+    Lambda -.->|"Looks up secrets in"| Secrets
+    
+    style User fill:#e1f5ff
+    style S3 fill:#fff3e0
+    style APIGW fill:#f3e5f5
+    style Lambda fill:#e8f5e9
+    style ECR fill:#fce4ec
+    style Secrets fill:#f1f8e9
+    style OpenAI fill:#ede7f6
+    style Logs fill:#fff9c4
+    style GitHub fill:#e0f2f1
+    style GHA fill:#ede7f6
+```
+
+**Flow**: User loads S3 website → submits prompt → API Gateway routes to Lambda → Lambda fetches OpenAI key from Secrets Manager → calls OpenAI via LangChain → returns response to browser with CORS headers. CI/CD pipeline (GitHub Actions) automatically builds container and deploys via SAM.
+
 ## Quick start
 
 1. Create an OpenAI API key and set it locally:
