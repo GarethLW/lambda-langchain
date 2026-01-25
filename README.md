@@ -41,16 +41,16 @@ graph TB
     GHA -.->|"Triggered by push to"| GitHub
     Lambda -.->|"Looks up secrets in"| Secrets
     
-    style User fill:#e1f5ff
-    style S3 fill:#fff3e0
-    style APIGW fill:#f3e5f5
-    style Lambda fill:#e8f5e9
-    style ECR fill:#fce4ec
-    style Secrets fill:#f1f8e9
-    style OpenAI fill:#ede7f6
-    style Logs fill:#fff9c4
-    style GitHub fill:#e0f2f1
-    style GHA fill:#ede7f6
+    style User fill:#0288d1,color:#fff
+    style S3 fill:#f57c00,color:#fff
+    style APIGW fill:#7b1fa2,color:#fff
+    style Lambda fill:#388e3c,color:#fff
+    style ECR fill:#c2185b,color:#fff
+    style Secrets fill:#689f38,color:#fff
+    style OpenAI fill:#512da8,color:#fff
+    style Logs fill:#f9a825,color:#000
+    style GitHub fill:#00897b,color:#fff
+    style GHA fill:#512da8,color:#fff
 ```
 
 **Flow**: User loads S3 website → submits prompt → API Gateway routes to Lambda → Lambda fetches OpenAI key from Secrets Manager → calls OpenAI via LangChain → returns response to browser with CORS headers. CI/CD pipeline (GitHub Actions) automatically builds container and deploys via SAM.
